@@ -1,4 +1,4 @@
-# 可爱计算器 - Tauri 版
+# 喵喵计算器 - Tauri 版
 
 一个基于 Tauri+HTML/CSS/JavaScript 的跨平台桌面计算器应用。  
 轻量、安全、可在 **Windows / Linux / macOS** 上运行。
