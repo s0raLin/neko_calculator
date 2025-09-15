@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>可爱计算器 - 喵喵版</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* ================= 全局样式 ================= */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #FFB6C1;
+            --secondary: #87CEFA;
+            --accent: #FFD700;
+            --dark: #3E2723;
+            --light: #FFF8F0;
+            --shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            /* 等宽字体 */
+            font-weight: bold;
+            /* 粗体 */
+            background: linear-gradient(135deg, #FFE6F2, #E6F2FF);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: var(--dark);
+        }
+
+
+        /* ================= 计算器容器 ================= */
+        .calculator {
+            background: white;
+            border-radius: 30px;
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 400px;
+            overflow: hidden;
+            position: relative;
+            border: 3px solid var(--primary);
+            transition: var(--transition);
+        }
+
+        /* ================= 顶部装饰 ================= */
+        .cat-header {
+            background: linear-gradient(to right, var(--primary), #FFC0CB);
+            padding: 15px 20px;
+            text-align: center;
+            position: relative;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .cat-header h1 {
+            font-size: 28px;
+            font-weight: bold;
+            color: #FF5722;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cat-header h1 i {
+            font-size: 24px;
+        }
+
+        /* ================= 显示屏 ================= */
+        .display {
+            background: linear-gradient(to bottom, #FFF0F5, #FFFAFA);
+            padding: 20px;
+            text-align: right;
+            font-size: 28px;
+            font-weight: bold;
+            min-height: 70px;
+            border-bottom: 2px dashed var(--primary);
+            position: relative;
+            overflow-x: auto;
+            /* Enable horizontal scrolling */
+            white-space: nowrap;
+            /* Prevent line breaks */
+            cursor: text;
+        }
+
+        .display-value {
+            color: var(--dark);
+            opacity: 0.8;
+            transition: var(--transition);
+        }
+
+        .display-history {
+            font-size: 14px;
+            color: #FF6B6B;
+            margin-top: 5px;
+            text-align: right;
+            opacity: 0.7;
+        }
+
+        /* ================= 按钮区域 ================= */
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            padding: 20px;
+        }
+
+
+        .btn {
+            height: 65px;
+            border-radius: 20px;
+            border: none;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+            background: linear-gradient(to bottom, #FFF0F5, #FFFAFA);
+            color: var(--dark);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12);
+        }
+
+
+        /* 按钮按下时优化文字间距 */
+        .btn:active {
+            transform: scale(0.95);
+            letter-spacing: 1px;
+            /* 按下时文字间距略增，视觉更舒适 */
+        }
+
+
+        /* 运算符按钮样式 */
+        .btn.operator {
+            background: linear-gradient(to bottom, var(--secondary), #E6F7FF);
+            color: #1E88E5;
+        }
+
+        /* 等号按钮样式 */
+        .btn.equals {
+            background: linear-gradient(to bottom, var(--primary), #FFC0CB);
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            grid-column: span 2;
+            height: 65px;
+        }
+
+
+        /* 清除按钮样式 */
+        .btn.clear {
+            background: linear-gradient(to bottom, var(--accent), #FFECB3);
+            color: #E65100;
+        }
+
+        /* 0按钮占两列 */
+        .btn.zero {
+            grid-column: span 2;
+            height: 65px;
+        }
+
+        /* 括号按钮样式，和等号按钮渐变类似，但大小与运算符按钮一致 */
+        .btn.paren {
+            background: linear-gradient(to bottom, var(--primary), #FFC0CB);
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            height: 65px;
+        }
+
+
+        /* ================= 错误提示 ================= */
+        .error {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            background: #FFEBEE;
+            color: #C62828;
+            text-align: center;
+            padding: 8px;
+            border-radius: 15px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .error.show {
+            opacity: 1;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 450px) {
+            .calculator {
+                border-radius: 25px;
+            }
+
+            .btn {
+                height: 60px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="calculator">
+        <div class="cat-header">
+            <h1><i class="fas fa-cat"></i> 喵喵计算器 <i class="fas fa-paw"></i></h1>
+        </div>
+
+        <div class="display">
+            <div class="display-history" id="history"></div>
+            <div class="display-value" id="display" contenteditable="true">0</div>
+        </div>
+
+
+        <div class="buttons">
+            <button class="btn clear" id="btnClear">C</button>
+            <button class="btn operator" id="btnPercent">%</button>
+            <button class="btn operator" id="btnDivide">÷</button>
+            <button class="btn operator" id="btnMultiply">×</button>
+
+            <button class="btn" id="btnSeven">7</button>
+            <button class="btn" id="btnEight">8</button>
+            <button class="btn" id="btnNine">9</button>
+            <button class="btn operator" id="btnSubtract">-</button>
+
+            <button class="btn" id="btnFour">4</button>
+            <button class="btn" id="btnFive">5</button>
+            <button class="btn" id="btnSix">6</button>
+            <button class="btn operator" id="btnAdd">+</button>
+
+            <button class="btn" id="btnOne">1</button>
+            <button class="btn" id="btnTwo">2</button>
+            <button class="btn" id="btnThree">3</button>
+            <button class="btn operator" id="btnBackspace">⌫</button>
+
+            <button class="btn zero" id="btnZero">0</button>
+            <button class="btn" id="btnDecimal">.</button>
+            <button class="btn operator" id="btnToggleSign">±</button>
+            <button class="btn equals" id="btnEquals">=</button>
+
+            <button class="btn paren" id="btnLeftParen">(</button>
+            <button class="btn paren" id="btnRightParen">)</button>
+        </div>
+
+
+        <div class="error" id="error">
+            表达式错误！喵～
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const display = document.getElementById('display');
+            const history = document.getElementById('history');
+            const error = document.getElementById('error');
+            const operatorChars = ['+', '-', '×', '÷', '%'];
+
+            // Focus on the display on load
+            display.focus();
+
+            function showError(message) {
+                error.textContent = message;
+                error.classList.add('show');
+                setTimeout(() => error.classList.remove('show'), 2000);
+            }
+
+            function isLastCharOperator() {
+                const text = display.textContent.trim();
+                if (text.length === 0) return false;
+                const lastChar = text.slice(-1);
+                return operatorChars.includes(lastChar) || lastChar === '.';
+            }
+
+            // Function to insert text at the current cursor position
+            function insertAtCursor(text) {
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    range.deleteContents();
+                    const node = document.createTextNode(text);
+                    range.insertNode(node);
+
+                    // Move the cursor after the inserted text
+                    range.setStartAfter(node);
+                    range.collapse(true);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                } else {
+                    // Fallback for no selection
+                    display.textContent += text;
+                }
+            }
+
+            function handleClick(value) {
+                let currentText = display.textContent.trim();
+
+                // Special handling for `0`
+                if (currentText === '0' && value !== '.' && !operatorChars.includes(value) && value !== '⌫' && value !== 'C' && value !== '±' && value !== '(') {
+                    display.textContent = value;
+                    return;
+                }
+
+                if (value === 'C') {
+                    display.textContent = '0';
+                    history.textContent = '';
+                    display.focus();
+                    return;
+                }
+
+                if (value === '±') {
+                    if (currentText.startsWith('-')) {
+                        display.textContent = currentText.slice(1);
+                    } else {
+                        display.textContent = '-' + currentText;
+                    }
+                    display.focus();
+                    return;
+                }
+
+                if (value === '⌫') {
+                    const selection = window.getSelection();
+                    if (selection.rangeCount > 0) {
+                        const range = selection.getRangeAt(0);
+                        if (!range.collapsed) {
+                            range.deleteContents();
+                        } else {
+                            range.setStart(range.startContainer, range.startOffset - 1);
+                            range.deleteContents();
+                        }
+                    } else {
+                        if (currentText.length === 1) {
+                            display.textContent = '0';
+                        } else {
+                            display.textContent = currentText.slice(0, -1);
+                        }
+                    }
+                    // If the display becomes empty after backspace, set it to '0'
+                    if (display.textContent.trim() === '') {
+                        display.textContent = '0';
+                    }
+                    display.focus();
+                    return;
+                }
+
+                if (value === '=') {
+                    calculate();
+                    display.focus();
+                    return;
+                }
+
+                // Handle consecutive operators
+                if (operatorChars.includes(value) && isLastCharOperator()) {
+                    display.textContent = currentText.slice(0, -1) + value;
+                    display.focus();
+                    return;
+                }
+
+                // Use the new function to insert text at the cursor
+                insertAtCursor(value);
+                display.focus();
+            }
+
+            function calculate() {
+                let expression = display.textContent.trim();
+
+                if (expression.length === 0) {
+                    showError("表达式不能为空！喵～");
+                    return;
+                }
+
+                // Replace characters for evaluation
+                expression = expression
+                    .replace(/×/g, '*')
+                    .replace(/÷/g, '/')
+                    .replace(/%/g, '/100'); // Note: '%' is typically a modulus operator in JS, but a percentage in a calculator. Using /100 is more intuitive.
+
+                try {
+                    // Check for division by zero before evaluating
+                    if (expression.includes('/0')) {
+                        showError("除数不能为0！喵～");
+                        return;
+                    }
+
+                    // Eval the sanitized expression
+                    let result = eval(expression);
+
+                    // Handle infinity or NaN
+                    if (!isFinite(result)) {
+                        showError("表达式错误！喵～");
+                        return;
+                    }
+
+                    history.textContent = expression + ' =';
+                    display.textContent = result.toString();
+                } catch (e) {
+                    showError("表达式错误！喵～");
+                }
+            }
+
+            // Map keyboard keys to button values
+            const keyMap = {
+                'Escape': 'C',
+                'Backspace': '⌫',
+                'Enter': '=',
+                '/': '÷',
+                '*': '×',
+                '-': '-',
+                '+': '+',
+                '%': '%'
+            };
+
+            // Event listeners for all buttons
+            document.querySelectorAll('.btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    handleClick(button.textContent.trim());
+                });
+            });
+
+            // Keyboard support
+            document.addEventListener('keydown', e => {
+                const key = e.key;
+                if ((key >= '0' && key <= '9') || key === '.' || key === '(' || key === ')') {
+                    handleClick(key);
+                } else if (keyMap[key]) {
+                    handleClick(keyMap[key]);
+                }
+            });
+
+            // Handle backspace and delete for contenteditable
+            display.addEventListener('keydown', e => {
+                if (e.key === 'Backspace' || e.key === 'Delete') {
+                    // Prevent default backspace behavior to handle it manually in handleClick
+                    e.preventDefault();
+                    handleClick('⌫');
+                }
+            });
+        });
+
+    </script>
+</body>
+
+</html>
