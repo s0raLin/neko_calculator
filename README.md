@@ -28,7 +28,7 @@
 - 跨平台支持
     
 ## 演示
-![演示](./neko.gif)
+<video src="./neko.webm" controls width="600"></video>
 
 
 ---
